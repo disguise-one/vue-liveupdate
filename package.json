@@ -1,0 +1,31 @@
+{
+  "name": "@disguise-one/vue-liveupdate",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Disguise Live Update WebSocket composable & helper component for live read & write of values into a disguise session.",
+  "author": "Disguise",
+  "license": "ISC",
+  "main": "dist/vue-liveupdate.umd.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "npm run build"
+  },
+  "files": [
+    "package.json",
+    "dist"
+  ],
+  "keywords": [
+    "disguise-one",
+    "liveupdate"
+  ],
+  "dependencies": {
+    "@vueuse/core": "^13.0.0",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.2.2"
+  }
+}
