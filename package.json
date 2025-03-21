@@ -10,7 +10,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "files": [
     "package.json",
@@ -26,7 +28,10 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/test-utils": "^2.4.1",
+    "jsdom": "^26.0.0",
     "vite": "^6.2.2",
-    "vite-plugin-lib-inject-css": "^2.2.1"
+    "vite-plugin-lib-inject-css": "^2.2.1",
+    "vitest": "^0.34.0"
   }
 }

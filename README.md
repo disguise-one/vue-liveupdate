@@ -35,6 +35,9 @@ export default {
     const liveUpdate = useLiveUpdate(directorEndpoint);
     const { offset, rotation } = liveUpdate.autoSubscribe('screen2:surface_1', ['offset', 'rotation']);
 
+    // Subscribe to more complex-named properties by providing the name
+    const { scaleX } = liveUpdate.subscribe('screen2:surface_1', { scaleX: 'scale.x' });
+
     return { liveUpdate, offset, rotation };
   }
 };
@@ -85,6 +88,28 @@ Using vscode, `Dev Containers: Clone Repository in Container Volume`
 ### Building the Library
 
 The library is built using Vite. The output includes both ES modules and UMD formats.
+
+## Testing
+
+To test this library locally, follow these steps:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/disguise-one/vue-liveupdate.git
+   cd vue-liveupdate
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Run automated tests:
+   ```bash
+   npm test
+   ```
+
+   The tests include unit tests for the composable and component, as well as integration tests using a mock WebSocket server.
 
 ## File Structure
 
