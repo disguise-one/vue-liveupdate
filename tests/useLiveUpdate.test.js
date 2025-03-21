@@ -6,6 +6,40 @@ import { createMockLiveUpdateServer } from './mockLiveUpdateServer';
 
 let mockServer;
 
+// This is a reusable component which initializes the live update system with a WebSocket connection.
+// It returns the liveUpdate object as a prop.
+const liveUpdateComponent = defineComponent({
+    setup() {
+        const liveUpdate = useLiveUpdate('localhost');
+        return { liveUpdate };
+    },
+    template: '<div></div>',
+})
+
+// This is a reusable component which only subscribes to the a set of properties, and returns them as props.
+// It requires the liveUpdate object to be passed in as a prop. This is the expected use case, where multiple
+// components are subscribing to various live update properties within an app, and they all share the same
+// liveUpdate object.
+function autoSubscriberComponent(objectPath, propPaths) {
+    return defineComponent({
+        props: {
+            liveUpdate: {
+                type: Object,
+                required: true,
+            },
+        },
+        setup(props) {
+            const { liveUpdate } = props;
+            const { offset } = liveUpdate.autoSubscribe(objectPath, propPaths);
+
+            expect(offset).toBeDefined();
+
+            return { offset };
+        },
+        template: '<div></div>',
+    });
+}
+
 describe('useLiveUpdate', () => {
     beforeEach(() => {
         mockServer = createMockLiveUpdateServer({
@@ -123,27 +157,94 @@ describe('useLiveUpdate', () => {
         expect(wrapper.vm.invalidProp).toBeUndefined();
     });
 
-    // it('should handle unsubscribing from properties', async () => {
-    //     const wrapper = mount(
-    //         defineComponent({
-    //             setup() {
-    //                 const liveUpdate = useLiveUpdate('localhost');
-    //                 const { offset } = liveUpdate.subscribe('screen2:surface_1', { offset: 'offset' });
+    it('should unsubscribe from properties on unmount', async () => {
+        const liveUpdateWrapper = mount(liveUpdateComponent);
 
-    //                 expect(offset).toBeDefined();
+        const liveUpdate = liveUpdateWrapper.vm.liveUpdate;
+        const subscriptions = liveUpdate.debugInfo.subscriptions;
+        const expectedSubscription = [
+            {
+                id: 0,
+                objectPath: 'screen2:surface_1',
+                propertyPath: 'offset',
+            }
+        ];
 
-    //                 liveUpdate.unsubscribe('screen2:surface_1', ['offset']);
 
-    //                 return { offset };
-    //             },
-    //             template: '<div></div>',
-    //         })
-    //     );
+        // Initial state is no subscriptions.
+        await vi.waitFor(() => expect(subscriptions.value).toEqual([]));
 
-    //     mockServer.simulateChange('screen2:surface_1', 'offset', { x: 30, y: 40 });
+        const offsetWrapper = mount(autoSubscriberComponent('screen2:surface_1', ['offset']), { props: {
+            liveUpdate
+        }});
 
-    //     await wrapper.vm.$nextTick();
+        // The offset component subscribes to the 'offset' property of 'screen2:surface_1'.
+        await vi.waitFor(() => expect(subscriptions.value).toEqual(expectedSubscription));
 
-    //     expect(wrapper.vm.offset).not.toEqual({ x: 30, y: 40 });
-    // });
+        await vi.waitFor(() => expect(offsetWrapper.vm.offset).toEqual({ x: 0, y: 0, z: 0 }));
+
+        mockServer.simulateChange('screen2:surface_1', 'offset', { x: 30, y: 40 });
+
+        await vi.waitFor(() => expect(offsetWrapper.vm.offset).toEqual({ x: 30, y: 40, z: 0 }));
+
+        offsetWrapper.unmount(); // this unmounts the `offset` computed property, causing unsubscribe to be fired.
+
+        await vi.waitFor(() => expect(subscriptions.value).toEqual([]));
+    });
+
+    it('should unsubscribe from properties only when the last is unmounted', async () => {
+        const liveUpdateWrapper = mount(liveUpdateComponent);
+
+        const liveUpdate = liveUpdateWrapper.vm.liveUpdate;
+        const subscriptions = liveUpdate.debugInfo.subscriptions;
+        const expectedSubscription = [
+            {
+                id: 0,
+                objectPath: 'screen2:surface_1',
+                propertyPath: 'offset',
+            }
+        ];
+
+        // Initial state is no subscriptions.
+        await vi.waitFor(() => expect(subscriptions.value).toEqual([]));
+
+        const offsetWrapper1 = mount(autoSubscriberComponent('screen2:surface_1', ['offset']), { props: {
+            liveUpdate
+        }});
+
+        await vi.waitFor(() => expect(subscriptions.value).toEqual(expectedSubscription));
+
+        await vi.waitFor(() => expect(offsetWrapper1.vm.offset).toEqual({ x: 0, y: 0, z: 0 }));
+
+        // Subscribe to the same property again.
+        const offsetWrapper2 = mount(autoSubscriberComponent('screen2:surface_1', ['offset']), { props: {
+            liveUpdate
+        }});
+
+        // It's definitely subscribed.
+        await vi.waitFor(() => expect(offsetWrapper2.vm.offset).toEqual({ x: 0, y: 0, z: 0 }));
+
+        // Still looks like 1 subscription.
+        await vi.waitFor(() => expect(subscriptions.value).toEqual(expectedSubscription));
+
+        mockServer.simulateChange('screen2:surface_1', 'offset', { x: 30, y: 40 });
+
+        // Both update.
+        await vi.waitFor(() => expect(offsetWrapper1.vm.offset).toEqual({ x: 30, y: 40, z: 0 }));
+        await vi.waitFor(() => expect(offsetWrapper2.vm.offset).toEqual({ x: 30, y: 40, z: 0 }));
+
+        // Unmount the first one.
+        offsetWrapper1.unmount();
+
+        setTimeout(() => {
+            // Still 1 subscription.
+            expect(subscriptions.value).toEqual(expectedSubscription);
+        }, 100); // 100ms should be enough for the unmount to be processed.
+
+        // Unmount the second one.
+        offsetWrapper2.unmount();
+
+        // Now the core session is unsubscribed.
+        await vi.waitFor(() => expect(subscriptions.value).toEqual([]));
+    });
 });

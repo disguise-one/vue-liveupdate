@@ -126,7 +126,7 @@ export function useLiveUpdate(director) {
         const ids = [];
         keys.forEach((key) => {
             const id = keyToId[key];
-            if (id) {
+            if (id !== undefined) {
                 ids.push(id);
             }
         });
