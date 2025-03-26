@@ -6,17 +6,19 @@
   "author": "Disguise",
   "license": "ISC",
   "main": "dist/vue-liveupdate.umd.cjs",
+  "module": "dist/vue-liveupdate.esm.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "rollup -c",
     "preview": "vite preview",
     "prepare": "npm run build",
     "test": "vitest run",
+    "test:types": "tsd",
     "test:watch": "vitest"
   },
   "files": [
-    "package.json",
-    "dist"
+    "dist/**/*"
   ],
   "keywords": [
     "disguise-one",
@@ -30,8 +32,16 @@
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/test-utils": "^2.4.1",
     "jsdom": "^26.0.0",
+    "rollup": "^4.37.0",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "rollup-plugin-vue": "^6.0.0",
+    "tsd": "^0.31.2",
+    "typescript": "^5.8.2",
     "vite": "^6.2.2",
     "vite-plugin-lib-inject-css": "^2.2.1",
+    "vite-plugin-static-copy": "^2.3.0",
     "vitest": "^0.34.0"
   }
 }
