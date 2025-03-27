@@ -55,8 +55,7 @@ The `LiveUpdateOverlay` component displays an overlay when the WebSocket connect
 </template>
 
 <script>
-import { useLiveUpdate } from '@disguise-one/vue-liveupdate';
-import LiveUpdateOverlay from '@disguise-one/vue-liveupdate/LiveUpdateOverlay.vue';
+import { useLiveUpdate, LiveUpdateOverlay } from '@disguise-one/vue-liveupdate';
 
 export default {
   components: { LiveUpdateOverlay },
