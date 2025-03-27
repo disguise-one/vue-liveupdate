@@ -19,9 +19,60 @@ npm install disguise-one/vue-liveupdate
 
 ## Usage
 
+### Full Example: Subscribing in a Vue Component
+
+Below is a complete example of how to use the `useLiveUpdate` composable in a Vue component to subscribe to live updates and bind the data to your template.
+
+```vue
+<template>
+  <div>
+    <h1>Live Update Example</h1>
+    <p>Offset: {{ offset }}</p>
+    <p>Rotation: {{ rotation }}</p>
+    <p>Scale X: {{ scaleX }}</p>
+
+    <!-- Display the connection status -->
+    <LiveUpdateOverlay :liveUpdate="liveUpdate" />
+  </div>
+</template>
+
+<script>
+import { useLiveUpdate, LiveUpdateOverlay } from '@disguise-one/vue-liveupdate';
+
+export default {
+  components: { LiveUpdateOverlay },
+  setup() {
+    // Extract the director endpoint from the URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const directorEndpoint = urlParams.get('director');
+
+    // Initialize the live update composable
+    const liveUpdate = useLiveUpdate(directorEndpoint);
+
+    // Automatically subscribe to simple properties
+    const { offset, rotation } = liveUpdate.autoSubscribe('screen2:surface_1', ['object.offset', 'object.rotation']);
+
+    // Manually subscribe to a more complex property
+    const { scaleX } = liveUpdate.subscribe('screen2:surface_1', { scaleX: 'object.scale.x' });
+
+    return { liveUpdate, offset, rotation, scaleX };
+  }
+};
+</script>
+```
+
+This example demonstrates how to:
+
+1. Extract the `director` endpoint from the URL query parameters.
+2. Use `autoSubscribe` for simple property subscriptions.
+3. Use `subscribe` for more complex property mappings.
+4. Display the live data and connection status in the template.
+
+You can copy and paste this component into your Vue 3 project to get started with live updates.
+
 ### Composable: `useLiveUpdate`
 
-The `useLiveUpdate` composable provides a WebSocket-based live update system. Pass the `director` plugin queryparam as the argument to ensure it connects to the session correctly.
+The `useLiveUpdate` composable provides a WebSocket-based live update system. Pass the `director` plugin queryparam as the argument to ensure it connects to the session correctly. It is expected to only create one live update connection per page, as this is more efficient. Sharing the live update composition between multiple components is supported and expected.
 
 #### Example
 
@@ -84,7 +135,7 @@ Using vscode, `Dev Containers: Clone Repository in Container Volume`
 
 ### Scripts
 
-- `npm run dev`: Start the development server.
+- `npm run dev`: Start the test runner to validate changes.
 - `npm run build`: Build the library for production.
 - `npm run preview`: Preview the production build.
 
