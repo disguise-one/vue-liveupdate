@@ -1,6 +1,8 @@
 import { expectType, expectError } from 'tsd';
-import { Ref, ComputedRef } from 'vue';
+import { Ref, ComputedRef, ref } from 'vue';
 import { useLiveUpdate } from '../src';
+import { LiveUpdateOverlay } from '../src';
+import type { LiveUpdateOverlayProps, UseLiveUpdateReturn } from '../src';
 
 // Valid usage
 const liveUpdate = useLiveUpdate('localhost:8080');
@@ -20,6 +22,32 @@ const autoComputedValues = liveUpdate.autoSubscribe('objectPath', ['property1', 
 expectType<ComputedRef<any>>(autoComputedValues.property1);
 expectType<ComputedRef<any>>(autoComputedValues.property2);
 
+// Valid usage
+const mockLiveUpdate: UseLiveUpdateReturn = {
+    status: ref('CLOSED'),
+    connectionUserInfo: ref('User Info'),
+    reconnect: () => {},
+    subscribe: (objectPath, refNameToPropertyPaths) => ({}),
+    autoSubscribe: (objectPath, propertyPaths) => ({}),
+    debugInfo: {
+        status: ref('CLOSED'),
+        subscriptions: ref([]),
+        values: {}
+    }
+};
+
+// Correct usage of LiveUpdateOverlay as a value
+expectType<typeof LiveUpdateOverlay>(LiveUpdateOverlay);
+
+// Valid usage
+expectType<LiveUpdateOverlayProps>({ liveUpdate: mockLiveUpdate });
+
 // Invalid usage (should cause TypeScript errors)
 expectError(useLiveUpdate()); // Missing argument
 expectError(liveUpdate.subscribe('objectPath', { ref1: 123 })); // Invalid property path type
+expectError(() => {
+    const invalidProps: LiveUpdateOverlayProps = { liveUpdate: {} }; // missing properties
+});
+expectError(() => {
+    const missingProps: LiveUpdateOverlayProps = { }; // Missing required prop
+});
