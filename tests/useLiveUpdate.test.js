@@ -60,7 +60,7 @@ describe('useLiveUpdate', () => {
             defineComponent({
                 setup() {
                     const liveUpdate = useLiveUpdate('localhost');
-                    const { offset, rotation } = liveUpdate.autoSubscribe('screen2:surface_1', ['offset', 'rotation']);
+                    const { offset, rotation } = liveUpdate.autoSubscribe('screen2:surface_1', ['object.offset', 'object.rotation']);
 
                     expect(offset).toBeDefined();
                     expect(rotation).toBeDefined();
@@ -75,12 +75,12 @@ describe('useLiveUpdate', () => {
             {
                 id: 0,
                 objectPath: 'screen2:surface_1',
-                propertyPath: 'offset',
+                propertyPath: 'object.offset',
             },
             {
                 id: 1,
                 objectPath: 'screen2:surface_1',
-                propertyPath: 'rotation',
+                propertyPath: 'object.rotation',
             },
         ]));
 
@@ -93,7 +93,7 @@ describe('useLiveUpdate', () => {
             defineComponent({
                 setup() {
                     const liveUpdate = useLiveUpdate('localhost');
-                    const { offsetX } = liveUpdate.subscribe('screen2:surface_1', { offsetX: 'offset.x' });
+                    const { offsetX } = liveUpdate.subscribe('screen2:surface_1', { offsetX: 'object.offset.x' });
 
                     expect(offsetX).toBeDefined();
 
@@ -111,7 +111,7 @@ describe('useLiveUpdate', () => {
             defineComponent({
                 setup() {
                     const liveUpdate = useLiveUpdate('localhost');
-                    const { offset } = liveUpdate.subscribe('screen2:surface_1', { offset: 'offset' });
+                    const { offset } = liveUpdate.subscribe('screen2:surface_1', { offset: 'object.offset' });
 
                     expect(offset).toBeDefined();
 
@@ -125,13 +125,13 @@ describe('useLiveUpdate', () => {
             {
                 id: 0,
                 objectPath: 'screen2:surface_1',
-                propertyPath: 'offset',
+                propertyPath: 'object.offset',
             }
         ]));
 
         await vi.waitFor(() => expect(wrapper.vm.offset).toEqual({ x: 0, y: 0, z: 0 }));
 
-        mockServer.simulateChange('screen2:surface_1', 'offset', { x: 10, y: 20 });
+        mockServer.simulateChange('screen2:surface_1', 'object.offset', { x: 10, y: 20 });
 
         await vi.waitFor(() => expect(wrapper.vm.offset).toEqual({ x: 10, y: 20, z: 0 }));
     });
@@ -166,7 +166,7 @@ describe('useLiveUpdate', () => {
             {
                 id: 0,
                 objectPath: 'screen2:surface_1',
-                propertyPath: 'offset',
+                propertyPath: 'object.offset',
             }
         ];
 
@@ -174,7 +174,7 @@ describe('useLiveUpdate', () => {
         // Initial state is no subscriptions.
         await vi.waitFor(() => expect(subscriptions.value).toEqual([]));
 
-        const offsetWrapper = mount(autoSubscriberComponent('screen2:surface_1', ['offset']), { props: {
+        const offsetWrapper = mount(autoSubscriberComponent('screen2:surface_1', ['object.offset']), { props: {
             liveUpdate
         }});
 
@@ -183,7 +183,7 @@ describe('useLiveUpdate', () => {
 
         await vi.waitFor(() => expect(offsetWrapper.vm.offset).toEqual({ x: 0, y: 0, z: 0 }));
 
-        mockServer.simulateChange('screen2:surface_1', 'offset', { x: 30, y: 40 });
+        mockServer.simulateChange('screen2:surface_1', 'object.offset', { x: 30, y: 40 });
 
         await vi.waitFor(() => expect(offsetWrapper.vm.offset).toEqual({ x: 30, y: 40, z: 0 }));
 
@@ -201,14 +201,14 @@ describe('useLiveUpdate', () => {
             {
                 id: 0,
                 objectPath: 'screen2:surface_1',
-                propertyPath: 'offset',
+                propertyPath: 'object.offset',
             }
         ];
 
         // Initial state is no subscriptions.
         await vi.waitFor(() => expect(subscriptions.value).toEqual([]));
 
-        const offsetWrapper1 = mount(autoSubscriberComponent('screen2:surface_1', ['offset']), { props: {
+        const offsetWrapper1 = mount(autoSubscriberComponent('screen2:surface_1', ['object.offset']), { props: {
             liveUpdate
         }});
 
@@ -217,7 +217,7 @@ describe('useLiveUpdate', () => {
         await vi.waitFor(() => expect(offsetWrapper1.vm.offset).toEqual({ x: 0, y: 0, z: 0 }));
 
         // Subscribe to the same property again.
-        const offsetWrapper2 = mount(autoSubscriberComponent('screen2:surface_1', ['offset']), { props: {
+        const offsetWrapper2 = mount(autoSubscriberComponent('screen2:surface_1', ['object.offset']), { props: {
             liveUpdate
         }});
 
@@ -227,7 +227,7 @@ describe('useLiveUpdate', () => {
         // Still looks like 1 subscription.
         await vi.waitFor(() => expect(subscriptions.value).toEqual(expectedSubscription));
 
-        mockServer.simulateChange('screen2:surface_1', 'offset', { x: 30, y: 40 });
+        mockServer.simulateChange('screen2:surface_1', 'object.offset', { x: 30, y: 40 });
 
         // Both update.
         await vi.waitFor(() => expect(offsetWrapper1.vm.offset).toEqual({ x: 30, y: 40, z: 0 }));

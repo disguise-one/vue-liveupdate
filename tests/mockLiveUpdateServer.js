@@ -14,7 +14,11 @@ export function createMockLiveUpdateServer(objects) {
             return null;
         }
 
-        return get(object, propertyPath);
+        if (!propertyPath.startsWith('object.')) {
+            return { error: "Not a valid property" };
+        }
+
+        return get(object, propertyPath.replace(/^object\./, ''));
     }
 
     function setProperty(objectPath, propertyPath, value) {
@@ -22,6 +26,13 @@ export function createMockLiveUpdateServer(objects) {
         if (!object) {
             throw new Error(`Object '${objectPath}' not found`);
         }
+
+        // For the mock, we assume everything starts with 'object.', the real system doesn't require this
+        // but it's useful to include the requirement to access properties via object.
+        if (!propertyPath.startsWith('object.')) {
+            throw new Error(`Not a valid property - test error`);
+        }
+        propertyPath = propertyPath.replace(/^object\./, '');
 
         if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
             const originalValue = object[propertyPath] || {};

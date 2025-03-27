@@ -33,15 +33,19 @@ export default {
     const urlParams = new URLSearchParams(window.location.search);
     const directorEndpoint = urlParams.get('director');
     const liveUpdate = useLiveUpdate(directorEndpoint);
-    const { offset, rotation } = liveUpdate.autoSubscribe('screen2:surface_1', ['offset', 'rotation']);
+    const { offset, rotation } = liveUpdate.autoSubscribe('screen2:surface_1', ['object.offset', 'object.rotation']);
 
     // Subscribe to more complex-named properties by providing the name
-    const { scaleX } = liveUpdate.subscribe('screen2:surface_1', { scaleX: 'scale.x' });
+    const { scaleX } = liveUpdate.subscribe('screen2:surface_1', { scaleX: 'object.scale.x' });
 
     return { liveUpdate, offset, rotation };
   }
 };
 ```
+
+`autoSubscribe` attempts to make it quicker and easier to subscribe to "simple" properties which start with "object." and have the property name without any special characters. This allows a quick subscription to the name without over-specifying the destination. We can see in the example above that `object.offset` becomes `offset` in the returned dictionary, making it quick and easy to bind the value to a variable.
+
+`subscribe` provides full control over the local name of the dictionary subscription. Both methods are otherwise identical.
 
 ### Component: `LiveUpdateOverlay`
 

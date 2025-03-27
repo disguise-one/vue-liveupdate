@@ -69,7 +69,6 @@ export function useLiveUpdate(director) {
     };
 
     installWsEventHandlers(ws.value);
-    open(); // Automatically connect, now that we're ready to respond to events.
 
     // Reactive data for the live update system.
     const subscriptions = ref([]);
@@ -116,7 +115,10 @@ export function useLiveUpdate(director) {
     function autoSubscribe(objectPath, propertyPaths) {
         const refNameToPropertyPaths = {};
         propertyPaths.forEach((propertyPath) => {
-            const refName = propertyPath.replace(/\./g, '_');
+            const sanitizedPropertyPath = propertyPath.startsWith('object.') 
+                ? propertyPath.slice(7) 
+                : propertyPath;
+            const refName = sanitizedPropertyPath.replace(/\./g, '_');
             refNameToPropertyPaths[refName] = propertyPath;
         });
         return subscribe(objectPath, refNameToPropertyPaths);
