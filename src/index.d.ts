@@ -1,5 +1,7 @@
 import { Ref, ComputedRef, Component } from 'vue';
 
+export { useSubscriptionVisibility } from './composables/useSubscriptionVisibility';
+
 export interface DebugInfo {
     status: Ref<string>;
     subscriptions: Ref<Array<Subscription>>;
@@ -12,6 +14,12 @@ export interface Subscription {
     propertyPath: string;
 }
 
+export interface SubscriptionValue extends ComputedRef<any> {
+    isFrozen: () => boolean;
+    freeze: () => void;
+    thaw: () => void;
+}
+
 export interface UseLiveUpdateReturn {
     status: Ref<string>;
     connectionUserInfo: Ref<string>;
@@ -19,11 +27,11 @@ export interface UseLiveUpdateReturn {
     subscribe: (
         objectPath: string,
         refNameToPropertyPaths: Record<string, string>
-    ) => Record<string, ComputedRef<any>>;
+    ) => Record<string, SubscriptionValue>;
     autoSubscribe: (
         objectPath: string,
         propertyPaths: string[]
-    ) => Record<string, ComputedRef<any>>;
+    ) => Record<string, SubscriptionValue>;
     debugInfo: DebugInfo;
 }
 

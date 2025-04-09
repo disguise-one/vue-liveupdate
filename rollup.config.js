@@ -1,6 +1,7 @@
 import vue from 'rollup-plugin-vue';
 import postcss from 'rollup-plugin-postcss';
 import copy from 'rollup-plugin-copy';
+import typescript from '@rollup/plugin-typescript';
 
 export default {
   input: 'src/index.js',
@@ -29,6 +30,9 @@ export default {
     postcss({
       inject: true, // Inject CSS into the JavaScript bundle
       extract: false // Do not create a separate CSS file
+    }),
+    typescript({
+      exclude: ['test-d/**/*'], // Exclude test-d folder
     }),
     copy({
       targets: [

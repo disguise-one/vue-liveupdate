@@ -68,11 +68,13 @@ This example demonstrates how to:
 3. Use `subscribe` for more complex property mappings.
 4. Display the live data and connection status in the template.
 
-You can copy and paste this component into your Vue 3 project to get started with live updates.
+You can copy and paste this component into your Vue 3 project to get started with live updates. Note that larger pages with multiple components are expected to pass `liveUpdate` as a prop to sub-components or to `provide` the live update object. It is not recommended to call `useLiveUpdate` multiple times within an application.
 
 ### Composable: `useLiveUpdate`
 
 The `useLiveUpdate` composable provides a WebSocket-based live update system. Pass the `director` plugin queryparam as the argument to ensure it connects to the session correctly. It is expected to only create one live update connection per page, as this is more efficient. Sharing the live update composition between multiple components is supported and expected.
+
+Note that we always call `subscribe` and `autoSubscribe` within a `setup` function or script within Vue. This ensures the computed dynamic properties returned from the subscription are able to be correctly managed by the Vue runtime.
 
 #### Example
 
@@ -121,6 +123,56 @@ export default {
 };
 </script>
 ```
+
+
+## Best practices for managing subscriptions
+
+Subscriptions come with a cost on the Designer server. When building pages which contain a lot of information, active subscription count is an important consideration.
+
+### Freeze and Thaw Subscriptions
+
+The `useLiveUpdate` composable provides the ability to freeze and thaw subscriptions. This is useful for temporarily pausing updates to optimize performance. For example, you can freeze a subscription when the associated component is not visible and thaw it when it becomes visible again. This functionality is available as the `freeze()`, `thaw()` and `isFrozen()` functions on each subscription value returned from subscribe, but it's usually better to wrap this with another composable like `useSubscriptionVisibility`.
+
+### Observing Visibility with `useSubscriptionVisibility`
+
+The `useSubscriptionVisibility` composable automates freezing and thawing subscriptions based on the visibility of an element. It uses the Intersection Observer API to detect visibility changes.
+
+#### Example
+
+When a page contains many compositions, each with their own subscriptions, when the composition is scrolled offscreen, it will automatically unsubscribe, due to the use of `useSubscriptionVisibility`. This is visible in the Vue dev tools panel.
+
+```vue
+<template>
+  <div ref="myComp">
+    {{ value }}
+  </tr>
+</template>
+
+<script lang="ts">
+import { defineComponent, useTemplateRef } from 'vue';
+import { useSubscriptionVisibility } from '@disguise-one/vue-liveupdate';
+import type { UseLiveUpdateReturn } from '@disguise-one/vue-liveupdate';
+
+export default defineComponent({
+  props: {
+    liveUpdate: {
+      type: Object as () => UseLiveUpdateReturn,
+      required: true
+    }
+  },
+  setup(props) {
+    const myComp = useTemplateRef<HTMLElement>('myComp');
+
+    const subscription = props.liveUpdate.autoSubscribe("screen2:surface_1", { "object.offset" });
+    useSubscriptionVisibility(row, subscription);
+
+    return { value: subscription.offset };
+  }
+});
+</script>
+```
+
+This ensures that subscriptions are only active when the element is visible, improving performance in scenarios where components may be hidden or off-screen.
 
 ## Development
 
