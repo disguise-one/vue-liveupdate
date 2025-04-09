@@ -1,4 +1,4 @@
-// useWebsocketSubscription.js
+// useLiveUpdate.js
 import { computed, onUnmounted, ref, reactive, watch } from 'vue'
 import { useWebSocket } from '@vueuse/core'
 
@@ -95,8 +95,10 @@ export function useLiveUpdate(director) {
         for (const [refName, propertyPath] of Object.entries(refNameToPropertyPaths)) {
             const key = `${objectPath}/${propertyPath}`;
             keys.push(key);
-            computedValues[refName] = computed({
-                get: () => keyToValue[key],
+
+            let frozenValue = null;
+            const accessor = computed({
+                get: () => frozenValue ?? keyToValue[key],
                 set: (newValue) => {
                     const id = keyToId[key];
                     if (id) {
@@ -104,6 +106,18 @@ export function useLiveUpdate(director) {
                     }
                 }
             });
+            accessor.isFrozen = () => frozenValue !== null;
+            accessor.freeze = () => {
+                if (frozenValue !== null) return;
+                frozenValue = keyToValue[key];
+                unsubscribe([key]);
+            };
+            accessor.thaw = () => {
+                if (frozenValue === null) return;
+                frozenValue = null;
+                innerSubscribe(objectPath, [propertyPath]);
+            };
+            computedValues[refName] = accessor;
         }
 
         onUnmounted(() => {
@@ -174,6 +188,13 @@ export function useLiveUpdate(director) {
                 const key = `${sub.objectPath}/${sub.propertyPath}`;
                 keyToId[key] = sub.id;
                 idToKey[sub.id] = key;
+            });
+
+            // Remove entries from the keyToValue object for unsubscribed keys
+            Object.keys(keyToValue).forEach((key) => {
+                if (!keyToId[key]) {
+                    delete keyToValue[key];
+                }
             });
         }
 

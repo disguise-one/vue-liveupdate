@@ -236,15 +236,84 @@ describe('useLiveUpdate', () => {
         // Unmount the first one.
         offsetWrapper1.unmount();
 
-        setTimeout(() => {
-            // Still 1 subscription.
-            expect(subscriptions.value).toEqual(expectedSubscription);
-        }, 100); // 100ms should be enough for the unmount to be processed.
+        // Delay for 100ms to allow the unmount to be processed.
+        // This is a workaround for the fact that Vue's unmounting process is asynchronous.
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        expect(subscriptions.value).toEqual(expectedSubscription);
 
         // Unmount the second one.
         offsetWrapper2.unmount();
 
         // Now the core session is unsubscribed.
         await vi.waitFor(() => expect(subscriptions.value).toEqual([]));
+    });
+
+    it('should freeze and thaw subscriptions correctly', async () => {
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    const liveUpdate = useLiveUpdate('localhost');
+                    const { offset } = liveUpdate.subscribe('screen2:surface_1', { offset: 'object.offset' });
+
+                    expect(offset).toBeDefined();
+
+
+
+                    return { liveUpdate, offset, freeze: offset.freeze, thaw: offset.thaw, isFrozen: offset.isFrozen };
+                },
+                template: '<div></div>',
+            })
+        );
+
+        const expectedSubscription = [
+            {
+                id: 0,
+                objectPath: 'screen2:surface_1',
+                propertyPath: 'object.offset',
+            }
+        ];
+
+        await vi.waitFor(() => expect(wrapper.vm.liveUpdate.debugInfo.subscriptions.value).toEqual(expectedSubscription));
+
+        const freeze = wrapper.vm.freeze;
+        const thaw = wrapper.vm.thaw;
+        const isFrozen = wrapper.vm.isFrozen;
+
+        // Initially, the subscription is active.
+        await vi.waitFor(() => expect(wrapper.vm.offset).toEqual({ x: 0, y: 0, z: 0 }));
+
+        // Freeze the subscription.
+        freeze();
+        expect(isFrozen()).toBe(true);
+
+        // The subscription should be unsubscribed.
+        await vi.waitFor(() => expect(wrapper.vm.liveUpdate.debugInfo.subscriptions.value).toEqual([]));
+
+        // Simulate a server change while frozen.
+        mockServer.simulateChange('screen2:surface_1', 'object.offset', { x: 10, y: 20 });
+
+        // Force a delay to ensure we definitely processed the simulated change.
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // The value should not update while frozen.
+        await vi.waitFor(() => expect(wrapper.vm.offset).toEqual({ x: 0, y: 0, z: 0 }));
+
+        // Thaw the subscription.
+        thaw();
+        expect(isFrozen()).toBe(false);
+
+        // Validate the subscription was reinstated (note with a new ID)
+        const newSubscription = [
+            {
+                id: 1,
+                objectPath: 'screen2:surface_1',
+                propertyPath: 'object.offset',
+            }
+        ];
+        await vi.waitFor(() => expect(wrapper.vm.liveUpdate.debugInfo.subscriptions.value).toEqual(newSubscription));
+
+        // The value should now update after thawing.
+        await vi.waitFor(() => expect(wrapper.vm.offset).toEqual({ x: 10, y: 20, z: 0 }));
     });
 });
