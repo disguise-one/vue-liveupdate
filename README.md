@@ -1,4 +1,4 @@
-# @disguise-one/vue-liveupdate
+com# @disguise-one/vue-liveupdate
 
 Disguise Live Update WebSocket composable & helper component for live read & write of values into a disguise session.
 
@@ -164,7 +164,7 @@ export default defineComponent({
     const myComp = useTemplateRef<HTMLElement>('myComp');
 
     const subscription = props.liveUpdate.autoSubscribe("screen2:surface_1", { "object.offset" });
-    useSubscriptionVisibility(row, subscription);
+    useSubscriptionVisibility(myComp, subscription);
 
     return { value: subscription.offset };
   }
