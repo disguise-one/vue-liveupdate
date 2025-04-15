@@ -1,8 +1,8 @@
 import { expectType, expectError } from 'tsd';
-import { Ref, ComputedRef, ref } from 'vue';
+import { Ref, ref } from 'vue';
 import { useLiveUpdate } from '../src';
 import { LiveUpdateOverlay } from '../src';
-import type { LiveUpdateOverlayProps, UseLiveUpdateReturn } from '../src';
+import type { LiveUpdateOverlayProps, SubscriptionValue, UseLiveUpdateReturn } from '../src';
 
 // Valid usage
 const liveUpdate = useLiveUpdate('localhost:8080');
@@ -14,13 +14,13 @@ const computedValues = liveUpdate.subscribe('objectPath', {
     ref1: 'property1',
     ref2: 'property2',
 });
-expectType<ComputedRef<any>>(computedValues.ref1);
-expectType<ComputedRef<any>>(computedValues.ref2);
+expectType<SubscriptionValue>(computedValues.ref1);
+expectType<SubscriptionValue>(computedValues.ref2);
 
 // Test autoSubscribe
 const autoComputedValues = liveUpdate.autoSubscribe('objectPath', ['property1', 'property2']);
-expectType<ComputedRef<any>>(autoComputedValues.property1);
-expectType<ComputedRef<any>>(autoComputedValues.property2);
+expectType<SubscriptionValue>(autoComputedValues.property1);
+expectType<SubscriptionValue>(autoComputedValues.property2);
 
 // Valid usage
 const mockLiveUpdate: UseLiveUpdateReturn = {
