@@ -1,6 +1,9 @@
 import { Ref, ComputedRef, Component } from 'vue';
 
-export { useSubscriptionVisibility } from './composables/useSubscriptionVisibility';
+declare function useSubscriptionVisibility(
+    elem: Ref<HTMLElement | null>,
+    subscriptions: Record<string, SubscriptionValue>
+  ): void;
 
 export interface DebugInfo {
     status: Ref<string>;
