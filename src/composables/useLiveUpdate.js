@@ -5,13 +5,30 @@ import { useWebSocket } from '@vueuse/core'
 /**
  * Initializes the live update system with a WebSocket connection.
  * @param {string} director - The WebSocket endpoint (director) to connect to.
+ * @param {Object} [config] - Optional configuration object.
+ * @param {number} [config.updateFrequencyMs] - Default update frequency in milliseconds for all subscriptions.
  * @returns {Object} - The live update API including status, subscribe, autoSubscribe, and debugInfo.
  */
-export function useLiveUpdate(director) {
+export function useLiveUpdate(director, config = {}) {
     if (!director) {
         console.error("Error: 'director' parameter is required.");
         throw new Error("'director' parameter is required.");
     }
+
+    // Validate configuration helper function
+    function validateConfiguration(configuration, context = 'configuration') {
+        if (!configuration) return;
+        
+        const allowedConfigKeys = ['updateFrequencyMs'];
+        const invalidKeys = Object.keys(configuration).filter(key => !allowedConfigKeys.includes(key));
+        if (invalidKeys.length > 0) {
+            console.error(`Invalid ${context} keys: ${invalidKeys.join(', ')}. Allowed keys: ${allowedConfigKeys.join(', ')}`);
+            throw new Error(`Invalid ${context} keys: ${invalidKeys.join(', ')}`);
+        }
+    }
+
+    // Validate global configuration
+    validateConfiguration(config, 'configuration');
 
     // Initialize the WebSocket connection & provide reactive data.
     const socketUrl = `ws://${director}/api/session/liveupdate`;
@@ -59,7 +76,8 @@ export function useLiveUpdate(director) {
                 objectPathToProperties[sub.objectPath].push(sub.propertyPath);
             });
             for (const [objectPath, propertyPaths] of Object.entries(objectPathToProperties)) {
-                innerSubscribe(objectPath, propertyPaths);
+                const configuration = objectPathToConfiguration[objectPath];
+                innerSubscribe(objectPath, propertyPaths, configuration);
             }
         }
     });
@@ -75,20 +93,39 @@ export function useLiveUpdate(director) {
     const keyToValue = reactive({});
     const keyToId = {};
     const idToKey = {};
+    const objectPathToConfiguration = {};
 
-    function innerSubscribe(objectPath, properties) {
+    function innerSubscribe(objectPath, properties, configuration) {
         const msg = {
             subscribe: {
                 object: objectPath,
                 properties
             }
         };
+        
+        if (configuration) {
+            msg.subscribe.configuration = configuration;
+        }
+        
         send(JSON.stringify(msg));
     }
 
-    function subscribe(objectPath, refNameToPropertyPaths) {
+    function subscribe(objectPath, refNameToPropertyPaths, configuration) {
         const properties = Object.values(refNameToPropertyPaths);
-        innerSubscribe(objectPath, properties);
+        
+        // Validate per-subscription configuration parameters
+        validateConfiguration(configuration, 'subscription configuration');
+        
+        // Merge default configuration with per-subscription configuration
+        const mergedConfiguration = { ...config, ...configuration };
+        
+        // Only store and send configuration if it has properties
+        const hasConfiguration = Object.keys(mergedConfiguration).length > 0;
+        if (hasConfiguration) {
+            objectPathToConfiguration[objectPath] = mergedConfiguration;
+        }
+        
+        innerSubscribe(objectPath, properties, hasConfiguration ? mergedConfiguration : null);
 
         const keys = [];
         const computedValues = {};
@@ -115,7 +152,8 @@ export function useLiveUpdate(director) {
             accessor.thaw = () => {
                 if (frozenValue === null) return;
                 frozenValue = null;
-                innerSubscribe(objectPath, [propertyPath]);
+                const configuration = objectPathToConfiguration[objectPath];
+                innerSubscribe(objectPath, [propertyPath], configuration);
             };
             computedValues[refName] = accessor;
         }
@@ -126,7 +164,7 @@ export function useLiveUpdate(director) {
         return computedValues;
     }
 
-    function autoSubscribe(objectPath, propertyPaths) {
+    function autoSubscribe(objectPath, propertyPaths, configuration) {
         const refNameToPropertyPaths = {};
         propertyPaths.forEach((propertyPath) => {
             const sanitizedPropertyPath = propertyPath.startsWith('object.') 
@@ -135,7 +173,7 @@ export function useLiveUpdate(director) {
             const refName = sanitizedPropertyPath.replace(/\./g, '_');
             refNameToPropertyPaths[refName] = propertyPath;
         });
-        return subscribe(objectPath, refNameToPropertyPaths);
+        return subscribe(objectPath, refNameToPropertyPaths, configuration);
     }
 
     function unsubscribe(keys) {

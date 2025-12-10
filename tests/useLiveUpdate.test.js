@@ -316,4 +316,310 @@ describe('useLiveUpdate', () => {
         // The value should now update after thawing.
         await vi.waitFor(() => expect(wrapper.vm.offset).toEqual({ x: 10, y: 20, z: 0 }));
     });
+
+    it('should include configuration in subscription message when provided', async () => {
+        let receivedMessage = null;
+        const originalSend = WebSocket.prototype.send;
+        
+        // Mock the WebSocket send method to capture messages
+        WebSocket.prototype.send = vi.fn().mockImplementation(function(message) {
+            if (this.readyState === this.constructor.OPEN) {
+                try {
+                    const parsed = JSON.parse(message);
+                    if (parsed.subscribe && parsed.subscribe.configuration) {
+                        receivedMessage = parsed;
+                    }
+                } catch (e) {
+                    // Ignore parsing errors for other messages
+                }
+            }
+            // Call the original send to maintain functionality
+            return originalSend.call(this, message);
+        });
+
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    const liveUpdate = useLiveUpdate('localhost');
+                    const { offset } = liveUpdate.subscribe(
+                        'screen2:surface_1', 
+                        { offset: 'object.offset' },
+                        { updateFrequencyMs: 1000 }
+                    );
+
+                    return { liveUpdate, offset };
+                },
+                template: '<div></div>',
+            })
+        );
+
+        // Wait for the subscription to be processed
+        await vi.waitFor(() => expect(receivedMessage).not.toBeNull());
+
+        // Verify the message includes configuration
+        expect(receivedMessage.subscribe.configuration).toHaveProperty('updateFrequencyMs', 1000);
+
+        // Restore original send method
+        WebSocket.prototype.send = originalSend;
+    });
+
+    it('should include configuration in autoSubscribe when provided', async () => {
+        let receivedMessage = null;
+        const originalSend = WebSocket.prototype.send;
+        
+        // Mock the WebSocket send method to capture messages
+        WebSocket.prototype.send = vi.fn().mockImplementation(function(message) {
+            if (this.readyState === this.constructor.OPEN) {
+                try {
+                    const parsed = JSON.parse(message);
+                    if (parsed.subscribe && parsed.subscribe.configuration) {
+                        receivedMessage = parsed;
+                    }
+                } catch (e) {
+                    // Ignore parsing errors for other messages
+                }
+            }
+            // Call the original send to maintain functionality
+            return originalSend.call(this, message);
+        });
+
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    const liveUpdate = useLiveUpdate('localhost');
+                    const { offset } = liveUpdate.autoSubscribe(
+                        'screen2:surface_1', 
+                        ['object.offset'],
+                        { updateFrequencyMs: 500 }
+                    );
+
+                    return { liveUpdate, offset };
+                },
+                template: '<div></div>',
+            })
+        );
+
+        // Wait for the subscription to be processed
+        await vi.waitFor(() => expect(receivedMessage).not.toBeNull());
+
+        // Verify the message includes configuration
+        expect(receivedMessage.subscribe.configuration).toHaveProperty('updateFrequencyMs', 500);
+
+        // Restore original send method
+        WebSocket.prototype.send = originalSend;
+    });
+
+    it('should not include configuration in message when not provided', async () => {
+        let subscribeMessage = null;
+        const originalSend = WebSocket.prototype.send;
+        
+        // Mock the WebSocket send method to capture messages
+        WebSocket.prototype.send = vi.fn().mockImplementation(function(message) {
+            if (this.readyState === this.constructor.OPEN) {
+                try {
+                    const parsed = JSON.parse(message);
+                    if (parsed.subscribe && parsed.subscribe.object === 'screen2:surface_1') {
+                        subscribeMessage = parsed;
+                    }
+                } catch (e) {
+                    // Ignore parsing errors for other messages
+                }
+            }
+            // Call the original send to maintain functionality
+            return originalSend.call(this, message);
+        });
+
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    const liveUpdate = useLiveUpdate('localhost');
+                    const { offset } = liveUpdate.subscribe(
+                        'screen2:surface_1', 
+                        { offset: 'object.offset' }
+                        // No configuration provided
+                    );
+
+                    return { liveUpdate, offset };
+                },
+                template: '<div></div>',
+            })
+        );
+
+        // Wait for the subscription to be processed
+        await vi.waitFor(() => expect(subscribeMessage).not.toBeNull());
+
+        // Verify the message does NOT include configuration
+        expect(subscribeMessage.subscribe).not.toHaveProperty('configuration');
+
+        // Restore original send method
+        WebSocket.prototype.send = originalSend;
+    });
+
+    it('should use default configuration when provided to useLiveUpdate', async () => {
+        let receivedMessage = null;
+        const originalSend = WebSocket.prototype.send;
+        
+        // Mock the WebSocket send method to capture messages
+        WebSocket.prototype.send = vi.fn().mockImplementation(function(message) {
+            if (this.readyState === this.constructor.OPEN) {
+                try {
+                    const parsed = JSON.parse(message);
+                    if (parsed.subscribe && parsed.subscribe.configuration) {
+                        receivedMessage = parsed;
+                    }
+                } catch (e) {
+                    // Ignore parsing errors for other messages
+                }
+            }
+            // Call the original send to maintain functionality
+            return originalSend.call(this, message);
+        });
+
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    // Create liveUpdate with default configuration
+                    const liveUpdate = useLiveUpdate('localhost', { updateFrequencyMs: 2000 });
+                    const { offset } = liveUpdate.subscribe(
+                        'screen2:surface_1', 
+                        { offset: 'object.offset' }
+                        // No configuration provided - should use default
+                    );
+
+                    return { liveUpdate, offset };
+                },
+                template: '<div></div>',
+            })
+        );
+
+        // Wait for the subscription to be processed
+        await vi.waitFor(() => expect(receivedMessage).not.toBeNull());
+
+        // Verify the message includes default configuration
+        expect(receivedMessage.subscribe.configuration).toHaveProperty('updateFrequencyMs', 2000);
+
+        // Restore original send method
+        WebSocket.prototype.send = originalSend;
+    });
+
+    it('should override default configuration with per-subscription configuration', async () => {
+        let receivedMessage = null;
+        const originalSend = WebSocket.prototype.send;
+        
+        // Mock the WebSocket send method to capture messages
+        WebSocket.prototype.send = vi.fn().mockImplementation(function(message) {
+            if (this.readyState === this.constructor.OPEN) {
+                try {
+                    const parsed = JSON.parse(message);
+                    if (parsed.subscribe && parsed.subscribe.configuration) {
+                        receivedMessage = parsed;
+                    }
+                } catch (e) {
+                    // Ignore parsing errors for other messages
+                }
+            }
+            // Call the original send to maintain functionality
+            return originalSend.call(this, message);
+        });
+
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    // Create liveUpdate with default configuration
+                    const liveUpdate = useLiveUpdate('localhost', { updateFrequencyMs: 2000 });
+                    const { offset } = liveUpdate.subscribe(
+                        'screen2:surface_1', 
+                        { offset: 'object.offset' },
+                        { updateFrequencyMs: 500 } // Override default
+                    );
+
+                    return { liveUpdate, offset };
+                },
+                template: '<div></div>',
+            })
+        );
+
+        // Wait for the subscription to be processed
+        await vi.waitFor(() => expect(receivedMessage).not.toBeNull());
+
+        // Verify the message includes overridden configuration
+        expect(receivedMessage.subscribe.configuration).toHaveProperty('updateFrequencyMs', 500);
+
+        // Restore original send method
+        WebSocket.prototype.send = originalSend;
+    });
+
+    it('should work without default configuration when none provided', async () => {
+        let subscribeMessage = null;
+        const originalSend = WebSocket.prototype.send;
+        
+        // Mock the WebSocket send method to capture messages
+        WebSocket.prototype.send = vi.fn().mockImplementation(function(message) {
+            if (this.readyState === this.constructor.OPEN) {
+                try {
+                    const parsed = JSON.parse(message);
+                    if (parsed.subscribe && parsed.subscribe.object === 'screen2:surface_1') {
+                        subscribeMessage = parsed;
+                    }
+                } catch (e) {
+                    // Ignore parsing errors for other messages
+                }
+            }
+            // Call the original send to maintain functionality
+            return originalSend.call(this, message);
+        });
+
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    // Create liveUpdate without default configuration
+                    const liveUpdate = useLiveUpdate('localhost');
+                    const { offset } = liveUpdate.subscribe(
+                        'screen2:surface_1', 
+                        { offset: 'object.offset' }
+                        // No configuration provided and no default
+                    );
+
+                    return { liveUpdate, offset };
+                },
+                template: '<div></div>',
+            })
+        );
+
+        // Wait for the subscription to be processed
+        await vi.waitFor(() => expect(subscribeMessage).not.toBeNull());
+
+        // Verify the message does NOT include configuration
+        expect(subscribeMessage.subscribe).not.toHaveProperty('configuration');
+
+        // Restore original send method
+        WebSocket.prototype.send = originalSend;
+    });
+
+    it('should throw error for invalid configuration keys', () => {
+        expect(() => {
+            useLiveUpdate('localhost', { invalidKey: 'value' });
+        }).toThrow('Invalid configuration keys: invalidKey');
+    });
+
+    it('should throw error for invalid subscription configuration keys', async () => {
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    const liveUpdate = useLiveUpdate('localhost');
+                    
+                    expect(() => {
+                        liveUpdate.subscribe(
+                            'screen2:surface_1',
+                            { offset: 'object.offset' },
+                            { invalidKey: 'value' }
+                        );
+                    }).toThrow('Invalid subscription configuration keys: invalidKey');
+
+                    return { liveUpdate };
+                },
+                template: '<div></div>',
+            })
+        );
+    });
 });

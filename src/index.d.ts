@@ -17,6 +17,10 @@ export interface Subscription {
     propertyPath: string;
 }
 
+export interface SubscriptionConfiguration {
+    updateFrequencyMs?: number;
+}
+
 export interface SubscriptionValue extends ComputedRef<any> {
     isFrozen: () => boolean;
     freeze: () => void;
@@ -29,11 +33,13 @@ export interface UseLiveUpdateReturn {
     reconnect: () => void;
     subscribe: (
         objectPath: string,
-        refNameToPropertyPaths: Record<string, string>
+        refNameToPropertyPaths: Record<string, string>,
+        configuration?: SubscriptionConfiguration
     ) => Record<string, SubscriptionValue>;
     autoSubscribe: (
         objectPath: string,
-        propertyPaths: string[]
+        propertyPaths: string[],
+        configuration?: SubscriptionConfiguration
     ) => Record<string, SubscriptionValue>;
     debugInfo: DebugInfo;
 }
@@ -45,9 +51,10 @@ export interface LiveUpdateOverlayProps {
 /**
  * Initializes the live update system with a WebSocket connection.
  * @param director - The WebSocket IP endpoint (host:port) to connect to.
+ * @param config - Optional configuration object with default settings.
  * @returns The live update API including status, subscribe, autoSubscribe, and debugInfo.
  */
-export function useLiveUpdate(director: string): UseLiveUpdateReturn;
+export function useLiveUpdate(director: string, config?: SubscriptionConfiguration): UseLiveUpdateReturn;
 
 /**
  * A Vue component that displays the connection status and provides reconnection functionality.

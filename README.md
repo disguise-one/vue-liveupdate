@@ -100,6 +100,31 @@ export default {
 
 `subscribe` provides full control over the local name of the dictionary subscription. Both methods are otherwise identical.
 
+#### Configuration Options
+
+Both `useLiveUpdate` and individual subscriptions accept an optional configuration object. Currently, the configuration object supports the `updateFrequencyMs` property to control how often updates are sent from the server. The default, and highest, frequency is 50ms.
+
+**Global Configuration**: Provide a configuration object to `useLiveUpdate` to set defaults for all subscriptions:
+
+```javascript
+// All subscriptions will update at most once per second by default
+const liveUpdate = useLiveUpdate(directorEndpoint, { updateFrequencyMs: 1000 });
+```
+
+**Per-Subscription Configuration**: Pass a configuration object to `subscribe` or `autoSubscribe` to override the default:
+
+```javascript
+// This subscription updates at most twice per second (overriding any default)
+const { offset } = liveUpdate.subscribe(
+  'screen2:surface_1', 
+  { offset: 'object.offset' },
+  { updateFrequencyMs: 500 }
+);
+
+// This subscription uses whatever set in `useLiveUpdate` (or the default, if unset)
+const { rotation } = liveUpdate.autoSubscribe('screen2:surface_1', ['object.rotation']);
+```
+
 ### Component: `LiveUpdateOverlay`
 
 The `LiveUpdateOverlay` component displays an overlay when the WebSocket connection is not active.
