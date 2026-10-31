@@ -157,6 +157,31 @@ describe('useLiveUpdate', () => {
         expect(wrapper.vm.invalidProp).toBeUndefined();
     });
 
+    // Mounts the component and returns it with its WebSocket.
+    function mountWithSocket() {
+        const addEventListener = vi.spyOn(WebSocket.prototype, 'addEventListener');
+        const wrapper = mount(liveUpdateComponent);
+        const socket = addEventListener.mock.instances[0];
+        addEventListener.mockRestore();
+        return { wrapper, socket };
+    }
+
+    it('should include the close reason in connectionUserInfo', () => {
+        const { wrapper, socket } = mountWithSocket();
+
+        socket.emit('close', new CloseEvent('close', { code: 1007, reason: 'Cannot convert JSON String to double' }));
+
+        expect(wrapper.vm.liveUpdate.connectionUserInfo.value).toBe('Invalid data: Cannot convert JSON String to double');
+    });
+
+    it('should show only the close code description when there is no close reason', () => {
+        const { wrapper, socket } = mountWithSocket();
+
+        socket.emit('close', new CloseEvent('close', { code: 1006 }));
+
+        expect(wrapper.vm.liveUpdate.connectionUserInfo.value).toBe('Could not establish connection');
+    });
+
     it('should unsubscribe from properties on unmount', async () => {
         const liveUpdateWrapper = mount(liveUpdateComponent);
 
