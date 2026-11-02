@@ -3,14 +3,14 @@
 {
 	"name": "Node.js",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"Vue.volar"
 			]
 		}
-	}
+	},
 
 	// Pass a GitHub token from the host so `gh` works in every container without
 	// `gh auth login` (OAuth logins in separate containers invalidate each other).
