@@ -59,7 +59,8 @@ export function useLiveUpdate(director, config = {}) {
                 1011: 'Internal error',
                 1015: 'TLS handshake'
             }[ev.code] || ev.code;
-            connectionUserInfo.value = reason;
+            // Designer gives the reason why it closed the connection
+            connectionUserInfo.value = ev.reason ? `${reason}: ${ev.reason}` : reason;
             //setTimeout(reconnect, 5000);
         });
     }
