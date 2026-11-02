@@ -12,6 +12,13 @@
 		}
 	}
 
+	// Pass a GitHub token from the host so `gh` works in every container without
+	// `gh auth login` (OAuth logins in separate containers invalidate each other).
+	// Set GH_TOKEN on the host; if unset this is empty and `gh` falls back to its own login.
+	"remoteEnv": {
+		"GH_TOKEN": "${localEnv:GH_TOKEN}"
+	},
+
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
