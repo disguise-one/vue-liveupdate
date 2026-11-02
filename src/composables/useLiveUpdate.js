@@ -61,7 +61,7 @@ export function useLiveUpdate(director, config = {}) {
             }[ev.code] || ev.code;
             // Designer gives the reason why it closed the connection
             connectionUserInfo.value = ev.reason ? `${reason}: ${ev.reason}` : reason;
-            //setTimeout(reconnect, 5000);
+            // Deliberately no automatic reconnect: the app decides when to call reconnect().
         });
     }
     watch(ws, installWsEventHandlers);
@@ -240,6 +240,13 @@ export function useLiveUpdate(director, config = {}) {
         if (parsed.valuesChanged) {
             parsed.valuesChanged.forEach((change) => {
                 const key = idToKey[change.id];
+                if (key === undefined) {
+                    // Not a subscription we know about (e.g. it was unsubscribed, or the server
+                    // sent a value before announcing the subscription). Don't store it under a
+                    // bogus key.
+                    console.warn("Live Update: ignoring value for unknown subscription id", change.id);
+                    return;
+                }
                 keyToValue[key] = change.value;
             });
         }

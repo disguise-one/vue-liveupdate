@@ -1,4 +1,4 @@
-com# @disguise-one/vue-liveupdate
+# @disguise-one/vue-liveupdate
 
 Disguise Live Update WebSocket composable & helper component for live read & write of values into a disguise session.
 
@@ -123,6 +123,18 @@ const { offset } = liveUpdate.subscribe(
 
 // This subscription uses whatever set in `useLiveUpdate` (or the default, if unset)
 const { rotation } = liveUpdate.autoSubscribe('screen2:surface_1', ['object.rotation']);
+```
+
+#### Connection loss and reconnecting
+
+`useLiveUpdate` does **not** reconnect automatically. If the connection drops, `status` becomes `'CLOSED'`, `connectionUserInfo` describes why, and it stays closed until your app calls `liveUpdate.reconnect()`. This leaves the retry policy (timing, backoff, user prompts) to the application. The `LiveUpdateOverlay` component shows a Reconnect button that calls it for you.
+
+Once the connection is re-established, all existing subscriptions are resubscribed automatically, so `reconnect()` is all that is needed. To retry automatically, watch `status` yourself:
+
+```javascript
+watch(liveUpdate.status, (status) => {
+  if (status === 'CLOSED') setTimeout(liveUpdate.reconnect, 5000);
+});
 ```
 
 ### Component: `LiveUpdateOverlay`

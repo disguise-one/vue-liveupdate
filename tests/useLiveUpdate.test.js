@@ -166,6 +166,18 @@ describe('useLiveUpdate', () => {
         return { wrapper, socket };
     }
 
+    it('should ignore values for unknown subscription ids', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const { wrapper, socket } = mountWithSocket();
+        await vi.waitFor(() => expect(wrapper.vm.liveUpdate.status.value).toBe('OPEN'));
+
+        socket._receiveMessage(JSON.stringify({ valuesChanged: [{ id: 999, value: 1 }] }));
+
+        await vi.waitFor(() => expect(warn).toHaveBeenCalled());
+        expect(Object.keys(wrapper.vm.liveUpdate.debugInfo.values)).toEqual([]);
+        warn.mockRestore();
+    });
+
     it('should include the close reason in connectionUserInfo', () => {
         const { wrapper, socket } = mountWithSocket();
 
