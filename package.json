@@ -5,7 +5,7 @@
   "description": "Disguise Live Update WebSocket composable & helper component for live read & write of values into a disguise session.",
   "author": "Disguise",
   "license": "ISC",
-  "main": "dist/vue-liveupdate.umd.cjs",
+  "main": "dist/vue-liveupdate.umd.js",
   "module": "dist/vue-liveupdate.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -15,7 +15,8 @@
     "prepare": "npm run build",
     "test": "vitest run",
     "test:types": "tsd",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "ci": "npm run build && npm test && npm run test:types"
   },
   "files": [
     "dist/**/*"
@@ -36,13 +37,10 @@
     "rollup": "^4.40.0",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-postcss": "^4.0.2",
-    "rollup-plugin-typescript2": "^0.36.0",
     "rollup-plugin-vue": "^6.0.0",
     "tsd": "^0.31.2",
     "typescript": "^5.8.3",
     "vite": "^6.2.6",
-    "vite-plugin-lib-inject-css": "^2.2.2",
-    "vite-plugin-static-copy": "^2.3.1",
     "vite-plugin-ts": "^1.3.2-1",
     "vitest": "^3.1.1"
   }
