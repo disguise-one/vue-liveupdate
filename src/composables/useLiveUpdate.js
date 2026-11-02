@@ -134,9 +134,9 @@ export function useLiveUpdate(director, config = {}) {
             const key = `${objectPath}/${propertyPath}`;
             keys.push(key);
 
-            let frozenValue = null;
+            const frozenValue = ref(null);
             const accessor = computed({
-                get: () => frozenValue ?? keyToValue[key],
+                get: () => frozenValue.value ?? keyToValue[key],
                 set: (newValue) => {
                     const id = keyToId[key];
                     if (id) {
@@ -144,15 +144,15 @@ export function useLiveUpdate(director, config = {}) {
                     }
                 }
             });
-            accessor.isFrozen = () => frozenValue !== null;
+            accessor.isFrozen = () => frozenValue.value !== null;
             accessor.freeze = () => {
-                if (frozenValue !== null) return;
-                frozenValue = keyToValue[key];
+                if (frozenValue.value !== null) return;
+                frozenValue.value = keyToValue[key];
                 unsubscribe([key]);
             };
             accessor.thaw = () => {
-                if (frozenValue === null) return;
-                frozenValue = null;
+                if (frozenValue.value === null) return;
+                frozenValue.value = null;
                 const configuration = objectPathToConfiguration[objectPath];
                 innerSubscribe(objectPath, [propertyPath], configuration);
             };
