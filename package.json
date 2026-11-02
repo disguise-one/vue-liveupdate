@@ -1,6 +1,6 @@
 {
   "name": "@disguise-one/vue-liveupdate",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "type": "module",
   "description": "Disguise Live Update WebSocket composable & helper component for live read & write of values into a disguise session.",
   "author": "Disguise",
