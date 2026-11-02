@@ -1,6 +1,6 @@
 import vue from 'rollup-plugin-vue';
 import postcss from 'rollup-plugin-postcss';
-import copy from 'rollup-plugin-copy';
+import { copyFileSync, mkdirSync } from 'node:fs';
 import typescript from '@rollup/plugin-typescript';
 
 export default {
@@ -34,10 +34,13 @@ export default {
     typescript({
       exclude: ['test-d/**/*'], // Exclude test-d folder
     }),
-    copy({
-      targets: [
-        { src: 'src/index.d.ts', dest: 'dist' }
-      ]
-    })
+    {
+      // Ship the hand-written type definitions alongside the bundles.
+      name: 'copy-type-definitions',
+      writeBundle() {
+        mkdirSync('dist', { recursive: true });
+        copyFileSync('src/index.d.ts', 'dist/index.d.ts');
+      }
+    }
   ]
 };

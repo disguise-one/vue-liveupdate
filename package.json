@@ -35,7 +35,6 @@
     "@vue/test-utils": "^2.5.1",
     "jsdom": "^30.1.3",
     "rollup": "^4.40.0",
-    "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-vue": "^6.0.0",
     "tsd": "^0.33.0",
@@ -44,5 +43,8 @@
     "vite": "^8.3.5",
     "vite-plugin-ts": "^1.3.2-1",
     "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
   }
 }
