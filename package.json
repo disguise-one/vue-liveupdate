@@ -42,7 +42,7 @@
     "typescript": "^5.8.3",
     "vite": "^8.3.5",
     "vite-plugin-ts": "^1.3.2-1",
-    "vitest": "^4.1.12"
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "minimatch": "^11.0.1"
