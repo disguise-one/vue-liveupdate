@@ -39,7 +39,7 @@
     "rollup-plugin-vue": "^6.0.0",
     "tsd": "^0.33.0",
     "tslib": "^2.9.1",
-    "typescript": "^5.8.3",
+    "typescript": "^7.0.2",
     "vite": "^8.3.5",
     "vite-plugin-ts": "^1.3.2-1",
     "vitest": "^5.0.5"
